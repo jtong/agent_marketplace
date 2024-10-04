@@ -1,0 +1,8 @@
+[
+    {
+        "name": "TestChatAgent",
+        "description": "A test agent for local development, which return message not streamly",
+        "version": "1.0.0",
+        "downloadUrl": "TestChatAgent/artifact.zip"
+    }
+]
