@@ -40,7 +40,7 @@ cd hello_world_agent
 
 ```shell
 npm init -y
-npm install ai-agent-response
+npm install -s ai-agent-response
 ```
 
 3. 创建入口文件 `entryAgent.js`:
