@@ -1,3 +1,4 @@
+
 `updateLastMessage` 属性是 Response 类中一个非常有用的功能，它用于特定的场景下更新已存在的最后一条消息，而不是添加一条新消息。当我们需要给message流式输出完后，再添加更多按钮的时候可以用它。
 
 ## updateLastMessage 属性

@@ -17,7 +17,7 @@
     * [动态切换多个LLM](doc/chat/SwitchMultiLLM.md)
   * 参考文档
     * [聊天记录数据结构](doc/chat/reference/ChatThreadDataStructure.md)
-    * [任务数据结构](doc/chat/reference/TaskDataStructure.md)
+    * [ai-agent-response数据结构](doc/chat/reference/AI-Agent-ResponseDataStructure.md)
   * 用例示例
     * [向消息添加按钮](doc/chat/usecase/AddAvailableTaskToMessage.md)
 * Agent 市场

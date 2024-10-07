@@ -1,4 +1,4 @@
-非常好，让我们按照相同的结构来详细介绍 Response 和 AvailableTask 类。
+
 
 ## Response 数据结构
 

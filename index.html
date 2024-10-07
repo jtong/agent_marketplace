@@ -21,7 +21,7 @@
         // console.log(location.hash)
         var markdownFile = currentPath ? currentPath+".md" : 'README.md';
         var markdownFile = window.location.origin + window.location.pathname + markdownFile;
-        var linkHtml =`[查看当前页面的 Markdown 文件](${markdownFile})\n`;
+        var linkHtml =`[查看当前页面的 Markdown 文件](${markdownFile})\n\n`;
         return linkHtml + content;
       });
     }
