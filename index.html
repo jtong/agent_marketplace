@@ -15,6 +15,17 @@
 <body>
   <div id="app"></div>
   <script>
+    function markdownLinkPlugin(hook) {
+      hook.beforeEach(function (content) {
+        var currentPath = location.hash.slice(2);
+        // console.log(location.hash)
+        var markdownFile = currentPath ? currentPath+".md" : 'README.md';
+        var markdownFile = window.location.origin + window.location.pathname + markdownFile;
+        var linkHtml =`[查看当前页面的 Markdown 文件](${markdownFile})\n`;
+        return linkHtml + content;
+      });
+    }
+
     window.$docsify = {
       name: 'My Assitant',
       repo: 'https://github.com/jtong/agent_marketplace',
@@ -24,7 +35,10 @@
       alias: {
         '/.*/_sidebar.md': '/_sidebar.md',
         '/.*/_navbar.md': '/_navbar.md'
-      }
+      },
+      plugins: [
+        markdownLinkPlugin
+      ]
     }
   </script>
   <!-- Docsify v4 -->
