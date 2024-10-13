@@ -13,6 +13,7 @@ class Response {
         this.meta = {};
         this.availableTasks = [];
         this.updateLastMessage = false;
+        this.nextTask = null;
     }
 }
 ```
@@ -79,6 +80,10 @@ class Response {
          // 添加新消息的逻辑
      }
      ```
+7. nextTask（下一个任务）
+   - 用途：指定在当前响应后应自动执行的下一个任务。
+   - UI 显示：不直接显示，但影响后续交互流程。
+   - 不显示情况：对用户隐藏，主要用于内部逻辑控制。
 
 ## Response 使用场景示例
 
@@ -101,16 +106,63 @@ class Response {
    ```
    - UI 表现：消息内容会逐步显示，给用户实时反馈的感觉。
 
-4. 带任务的响应
+4. 给最后一条消息添加任务按钮的响应
    ```javascript
    const response = new Response("这是一个带任务的响应。");
+   response.setUpdateLastMessage(true);
    response.addAvailableTask(new AvailableTask("执行任务", new Task({/*...*/})));
    ```
    - UI 表现：显示消息文本，下方有一个"执行任务"按钮。
 
+5. 计划响应（Plan Response）
+   ```javascript
+   const response = new Response();
+   response.setPlanTasks([
+     new Task({
+       name: "分析代码",
+       type: Task.TYPE_ACTION,
+       message: "正在分析代码复杂度...",
+       skipUserMessage: true
+     }),
+     new Task({
+       name: "生成报告",
+       type: Task.TYPE_ACTION,
+       message: "正在生成分析报告...",
+       skipUserMessage: true
+     })
+   ]);
+   return response;
+   ```
+   - UI 表现：系统会忽略Response里的FullMessage，立刻依次执行计划中的任务，每个任务可能会生成独立的消息或更新现有消息，具体取决于任务的配置。
+
+6. 带有后续任务的响应
+   ```javascript
+   const response = new Response("这是当前任务的响应。");
+   response.setNextTask(new Task({
+       name: "FollowUpAction",
+       type: Task.TYPE_ACTION,
+       message: "执行后续操作",
+       skipUserMessage: true
+   }));
+   return response;
+   ```
+   - UI 表现：首先显示当前响应的消息，然后自动执行后续任务，可能会生成额外的消息或更新现有消息。
+
+7. 带有后续任务的响应
+   ```javascript
+   const response = new Response("这是当前任务的响应。");
+   response.setNextTask(new Task({
+       name: "FollowUpAction",
+       type: Task.TYPE_ACTION,
+       message: "执行后续操作",
+       skipUserMessage: true
+   }));   
+
+ 
+
 ## AvailableTask 数据结构
 
-现在，让我们看看 AvailableTask 的结构：
+AvailableTask 代表一个可供用户选择的任务，通常与 UI 中的按钮相关联。现在，让我们看看 AvailableTask 的结构：
 
 ```javascript
 class AvailableTask {
@@ -195,159 +247,45 @@ function addTaskButtons(container, availableTasks) {
 
 ## Task 数据结构
 
-首先，让我们看一下 Task 的基本结构：
+Task 代表一个可执行的任务，它与 UI 中的按钮无直接关系。Task 通常是由 Agent 内部逻辑或系统流程调用执行的。
 
 ```javascript
 class Task {
+    static TYPE_MESSAGE = 'message';
+    static TYPE_ACTION = 'action';
+
     constructor({
         name,
         type,
         message,
         meta = {},
+        host_utils = null,
         skipUserMessage = false,
-        skipBotMessage = false,
-        host_utils = null
+        skipBotMessage = false
     }) {
         this.name = name;
         this.type = type;
         this.message = message;
         this.meta = meta;
+        this.host_utils = host_utils;
         this.skipUserMessage = skipUserMessage;
         this.skipBotMessage = skipBotMessage;
-        this.host_utils = host_utils;
+    }
+
+    isMessageTask() {
+        return this.type === Task.TYPE_MESSAGE;
     }
 }
 ```
 
-## 属性详解
+### 属性说明
 
-1. name（任务名称）
-   - 用途：标识任务的唯一名称。
-   - UI 显示：通常显示在任务按钮上。
-   - 不显示情况：几乎总是显示，除非是完全后台的任务。
-
-2. type（任务类型）
-   - 用途：指定任务的类型，如 ACTION、MESSAGE 等。
-   - UI 显示：通常不直接显示，但可能影响按钮的样式或行为。
-   - 不显示情况：对用户隐藏，主要用于内部逻辑。
-
-3. message（任务消息）
-   - 用途：描述任务或作为执行任务时的输入。
-   - UI 显示：可能显示为按钮的悬停提示，或作为执行任务时的用户消息。
-   - 不显示情况：当 `skipUserMessage` 为 true 时，不会作为用户消息显示。
-
-4. meta（元数据）
-   - 用途：存储额外的任务相关信息。
-   - UI 显示：通常不直接显示，但可能用于控制 UI 行为或存储上下文信息。
-   - 不显示情况：对用户隐藏，主要用于内部逻辑。
-
-5. skipUserMessage（跳过用户消息）
-   - 用途：控制是否在聊天界面显示用户执行任务的消息。
-   - UI 显示：影响用户消息的显示与否。
-   - 显示逻辑：
-     ```javascript
-     if (!task.skipUserMessage) {
-         displayUserMessage({
-             id: 'msg_' + Date.now(),
-             sender: 'user',
-             text: task.message,
-             timestamp: Date.now(),
-             threadId: window.threadId
-         });
-     }
-     ```
-
-6. skipBotMessage（跳过机器人消息）
-   - 用途：控制是否在聊天界面显示机器人执行任务后的响应。
-   - UI 显示：影响机器人响应消息的显示与否。
-   - 显示逻辑：
-     ```javascript
-     if (task.skipBotMessage) {
-         const silentResponseHandler = async () => { };
-         await this.messageHandler.handleTask(thread, task, silentResponseHandler);
-     } else {
-         await this.messageHandler.handleTask(thread, task, responseHandler);
-     }
-     ```
-
-7. host_utils（主机工具）
-   - 用途：提供额外的工具或方法给任务使用。
-   - UI 显示：不直接显示，用于任务执行过程中的辅助功能。
-   - 不显示情况：对用户隐藏，仅在任务执行时内部使用。
-
-## UI 显示和交互
-
-1. 任务按钮
-   - 显示：`name` 属性用作按钮文本。
-   - 交互：点击按钮时，会执行 `executeTask` 函数。
-
-2. 用户消息
-   - 显示：如果 `skipUserMessage` 为 false，`message` 属性会作为用户消息显示。
-   - 不显示：当 `skipUserMessage` 为 true 时。
-
-3. 机器人响应
-   - 显示：如果 `skipBotMessage` 为 false，机器人的响应会正常显示。
-   - 不显示：当 `skipBotMessage` 为 true 时。
-
-4. 任务执行过程
-   ```javascript
-   function executeTask(task) {
-       if (!task.skipUserMessage) {
-           displayUserMessage({
-               id: 'msg_' + Date.now(),
-               sender: 'user',
-               text: task.message,
-               timestamp: Date.now(),
-               threadId: window.threadId
-           });
-       }
-       const message = {
-           type: 'executeTask',
-           threadId: window.threadId,
-           taskName: task.name,
-           message: task.message
-       };
-       window.vscode.postMessage(message);
-   }
-   ```
-
-## 使用场景示例
-
-1. 普通任务
-   ```javascript
-   new Task({
-       name: "分析代码",
-       type: Task.TYPE_ACTION,
-       message: "请分析以上代码的复杂度",
-       skipUserMessage: false,
-       skipBotMessage: false
-   })
-   ```
-   - UI 表现：显示"分析代码"按钮，点击后显示用户消息和机器人响应。
-
-2. 静默后台任务
-   ```javascript
-   new Task({
-       name: "更新配置",
-       type: Task.TYPE_ACTION,
-       message: "静默更新系统配置",
-       skipUserMessage: true,
-       skipBotMessage: true,
-       meta: { configType: "system" }
-   })
-   ```
-   - UI 表现：显示"更新配置"按钮，点击后不显示任何消息，但在后台执行任务。
-
-3. 仅显示结果的任务
-   ```javascript
-   new Task({
-       name: "生成报告",
-       type: Task.TYPE_ACTION,
-       message: "生成本周工作报告",
-       skipUserMessage: true,
-       skipBotMessage: false
-   })
-   ```
-   - UI 表现：显示"生成报告"按钮，点击后不显示用户消息，但显示机器人生成的报告。
+- `name`: 任务的唯一标识符。
+- `type`: 任务类型，可以是 `TYPE_MESSAGE` 或 `TYPE_ACTION`。
+- `message`: 与任务相关的消息内容。
+- `meta`: 存储任务相关的额外元数据。
+- `host_utils`: 提供宿主环境（VSCode 插件）的辅助功能。
+- `skipUserMessage`: 是否在执行任务时跳过显示用户消息。
+- `skipBotMessage`: 是否在执行任务时跳过显示机器人消息。
 
 通过灵活使用这些属性，特别是 `skipUserMessage` 和 `skipBotMessage`，我们可以创建各种类型的任务，从完全可见的交互式任务到完全在后台运行的静默任务。这种灵活性允许开发者根据具体需求定制任务的 UI 行为，提升用户体验和界面的清晰度。
