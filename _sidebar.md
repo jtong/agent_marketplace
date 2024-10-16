@@ -11,8 +11,12 @@
   * 参考文档
     * [聊天记录数据结构](doc/chat/reference/ChatThreadDataStructure.md)
     * [ai-agent-response数据结构](doc/chat/reference/AI-Agent-ResponseDataStructure.md)
+    * [Agent接口](doc/chat/reference/AgentInterface.md)
+    * [agents.json配置](doc/chat/reference/AgentsJsonConfig.md)
   * 用例示例
     * [向消息添加按钮](doc/chat/usecase/AddAvailableTaskToMessage.md)
+    * [添加标记消息](doc/chat/usecase/AddMarkerMessage.md)
+    * [引导消息](doc/chat/usecase/BootMessage.md)
 
 * Agent 市场
   * [压缩包注意事项](doc/agent_marketplace/压缩包注意事项.md)
