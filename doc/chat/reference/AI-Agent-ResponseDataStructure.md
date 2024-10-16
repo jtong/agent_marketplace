@@ -148,15 +148,7 @@ class Response {
    ```
    - UI 表现：首先显示当前响应的消息，然后自动执行后续任务，可能会生成额外的消息或更新现有消息。
 
-7. 带有后续任务的响应
-   ```javascript
-   const response = new Response("这是当前任务的响应。");
-   response.setNextTask(new Task({
-       name: "FollowUpAction",
-       type: Task.TYPE_ACTION,
-       message: "执行后续操作",
-       skipUserMessage: true
-   }));   
+ 
 
  
 
@@ -289,3 +281,121 @@ class Task {
 - `skipBotMessage`: 是否在执行任务时跳过显示机器人消息。
 
 通过灵活使用这些属性，特别是 `skipUserMessage` 和 `skipBotMessage`，我们可以创建各种类型的任务，从完全可见的交互式任务到完全在后台运行的静默任务。这种灵活性允许开发者根据具体需求定制任务的 UI 行为，提升用户体验和界面的清晰度。
+
+
+## Response.fromJSON 方法
+
+Response 类现在提供了一个静态方法 `fromJSON`，允许从 JSON 配置创建 Response 对象。这个方法特别有用于从配置文件（如 agents.json）中创建 Response 对象，例如用于 bootMessage。
+
+```javascript
+static fromJSON(config) {
+    const response = new Response(config.message || '');
+
+    if (config.isHtml) {
+        response.setAsHtml();
+    }
+
+    if (config.stream) {
+        response.setStream(config.stream);
+    }
+
+    if (config.meta) {
+        response.meta = config.meta;
+    }
+
+    if (config.updateLastMessage) {
+        response.setUpdateLastMessage(config.updateLastMessage);
+    }
+
+    if (config.availableTasks && Array.isArray(config.availableTasks)) {
+        config.availableTasks.forEach(taskConfig => {
+            const task = new Task(taskConfig.task);
+            const availableTask = new AvailableTask(taskConfig.name, task);
+            response.addAvailableTask(availableTask);
+        });
+    }
+
+    if (config.nextTask) {
+        response.setNextTask(new Task(config.nextTask));
+    }
+
+    return response;
+}
+```
+
+### JSON 配置结构
+
+用于创建 Response 对象的 JSON 配置应具有以下结构：
+
+```json
+{
+  "message": "响应消息的文本内容",
+  "isHtml": false,
+  "meta": {
+    "key1": "value1",
+    "key2": "value2"
+  },
+  "updateLastMessage": false,
+  "availableTasks": [
+    {
+      "name": "任务1名称",
+      "task": {
+        "name": "Task1",
+        "type": "ACTION",
+        "message": "执行任务1"
+      }
+    },
+    {
+      "name": "任务2名称",
+      "task": {
+        "name": "Task2",
+        "type": "ACTION",
+        "message": "执行任务2"
+      }
+    }
+  ],
+  "nextTask": {
+    "name": "NextTask",
+    "type": "ACTION",
+    "message": "执行下一个任务"
+  }
+}
+```
+
+#### JSON 配置字段说明
+
+- `message` (字符串，必填)：响应的主要文本内容。
+- `isHtml` (布尔值，可选)：指示消息内容是否为 HTML 格式。默认为 false。
+- `meta` (对象，可选)：包含额外的元数据信息。
+- `updateLastMessage` (布尔值，可选)：指示是否应更新最后一条消息而不是添加新消息。默认为 false。
+- `availableTasks` (数组，可选)：包含可用任务的列表。每个任务都有一个名称和一个任务配置对象。
+- `nextTask` (对象，可选)：指定在当前响应后应自动执行的下一个任务。
+
+### 使用示例
+
+以下是如何使用 `Response.fromJSON` 方法创建 Response 对象的示例：
+
+```javascript
+const responseConfig = {
+  message: "欢迎使用我们的服务！",
+  isHtml: false,
+  meta: {
+    isBootMessage: true,
+    isVirtual: true
+  },
+  availableTasks: [
+    {
+      name: "开始新任务",
+      task: {
+        name: "StartNewTask",
+        type: "ACTION",
+        message: "请选择您想开始的任务类型"
+      }
+    }
+  ]
+};
+
+const response = Response.fromJSON(responseConfig);
+```
+
+这种方法使得从配置文件或外部源创建复杂的 Response 对象变得简单和直观。它特别适用于需要从静态配置（如 bootMessage）创建 Response 的场景，同时也保持了创建动态 Response 的灵活性。
