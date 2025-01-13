@@ -55,6 +55,7 @@ bootMessage 对象包含以下字段：
   - `isBootMessage` (布尔值): 标识这是一个引导消息。
   - `isVirtual` (布尔值): 标识这是一个虚拟消息。
 - `availableTasks` (数组，可选): 一组可供用户选择的初始任务。
+- `nextTasks` (数组，可选)：指定在当前响应后应自动执行的一系列任务。每个任务都是一个 Task 配置对象。
 
 每个 availableTask 包含：
 - `name` (字符串): 显示给用户的任务名称。

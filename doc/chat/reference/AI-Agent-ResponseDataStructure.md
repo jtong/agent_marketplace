@@ -13,7 +13,7 @@ class Response {
         this.meta = {};
         this.availableTasks = [];
         this.updateLastMessage = false;
-        this.nextTask = null;
+        this.nextTasks = []; 
     }
 }
 ```
@@ -80,9 +80,9 @@ class Response {
          // 添加新消息的逻辑
      }
      ```
-7. nextTask（下一个任务）
-   - 用途：指定在当前响应后应自动执行的下一个任务。
-   - UI 显示：不直接显示，但影响后续交互流程。
+7. nextTasks（下一个任务列表）
+   - 用途：指定在当前响应后应自动执行的一系列任务。
+   - UI 显示：由具体的Task设置决定，通常不直接显示，但影响后续交互流程。
    - 不显示情况：对用户隐藏，主要用于内部逻辑控制。
 
 ## Response 使用场景示例
@@ -137,20 +137,23 @@ class Response {
 
 6. 带有后续任务的响应
    ```javascript
-   const response = new Response("这是当前任务的响应。");
-   response.setNextTask(new Task({
-       name: "FollowUpAction",
-       type: Task.TYPE_ACTION,
-       message: "执行后续操作",
-       skipUserMessage: true
-   }));
-   return response;
+    const response = new Response("这是当前任务的响应。");
+    response.addNextTask(new Task({
+        name: "FollowUpAction1",
+        type: Task.TYPE_ACTION,
+        message: "执行第一个后续操作",
+        skipUserMessage: true
+    }));
+    response.addNextTask(new Task({
+        name: "FollowUpAction2",
+        type: Task.TYPE_ACTION,
+        message: "执行第二个后续操作",
+        skipUserMessage: true
+    }));
+    return response;
    ```
-   - UI 表现：首先显示当前响应的消息，然后自动执行后续任务，可能会生成额外的消息或更新现有消息。
+   - UI 表现：首先显示当前响应的消息，然后自动执行多个后续任务，可能会生成额外的消息或更新现有消息。
 
- 
-
- 
 
 ## AvailableTask 数据结构
 
@@ -315,8 +318,10 @@ static fromJSON(config) {
         });
     }
 
-    if (config.nextTask) {
-        response.setNextTask(new Task(config.nextTask));
+    if (config.nextTasks && Array.isArray(config.nextTasks)) {
+        config.nextTasks.forEach(taskConfig => {
+            response.addNextTask(new Task(taskConfig));
+        });
     }
 
     return response;
@@ -354,11 +359,18 @@ static fromJSON(config) {
       }
     }
   ],
-  "nextTask": {
-    "name": "NextTask",
-    "type": "ACTION",
-    "message": "执行下一个任务"
-  }
+  "nextTasks": [
+    {
+      "name": "NextTask1",
+      "type": "ACTION",
+      "message": "执行下一个任务1"
+    },
+    {
+      "name": "NextTask2",
+      "type": "ACTION",
+      "message": "执行下一个任务2"
+    }
+  ]
 }
 ```
 
@@ -369,7 +381,7 @@ static fromJSON(config) {
 - `meta` (对象，可选)：包含额外的元数据信息。
 - `updateLastMessage` (布尔值，可选)：指示是否应更新最后一条消息而不是添加新消息。默认为 false。
 - `availableTasks` (数组，可选)：包含可用任务的列表。每个任务都有一个名称和一个任务配置对象。
-- `nextTask` (对象，可选)：指定在当前响应后应自动执行的下一个任务。
+- `nextTasks` (数组，可选)：指定在当前响应后应自动执行的一系列任务。每个任务都是一个 Task 配置对象。
 
 ### 使用示例
 
